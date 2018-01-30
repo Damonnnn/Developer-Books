@@ -1,0 +1,180 @@
+########################################################################################################################################
+##  datapath 相关
+########################################################################################################################################
+ ps -A -o PRI,SCHED,CMD #查看优先级信息。
+#kernel log控制：
+	- echo 1 > /proc/sys/kernel/printk #关闭过多的log
+	- echo 7 > /proc/sys/kernel/printk #打开全部log
+	- echo 0 > /sys/module/printk/parameters/console_suspend #配置参数，使得控制台不sleep。
+
+#临时命令：
+	- echo 1 > /proc/wcn_btwf/start    #启动BTWF的CM4,***为随机内容,暂时未作字符串识别处理
+	- iwnpi wlan0 get_rate
+	- iwnpi wlan0 lna_status
+
+#查看sblock是否分配成功：
+	- cat /sys/kernel/debug/sipc/sblock
+#查看 credit信息
+	- cat /sys/kernel/debug/ieee80211/phy0/sprdwl_wifi/sdioinfo
+#wcnd
+	- mv /vendor/bin/connmgr     /vendor/bin/connmgr_bk;           #关闭wcnd，改掉其名字就好了。
+	- 
+
+#Iperf测试网络带宽的原理是client端尽最大速度向server端发送数据，测试过程中的带宽。
+	- TCP:
+		client: iperf -c xx.xx.xx.xx -i1
+		server: iperf -s -i1
+	- UDP:
+		client: iperf -c xx.xx.xx.xx -b20M -i1 -t20  #最大62M. -t20 means 20s
+		server: iperf -s -u -i1
+
+#利用iwnpi读取CP寄存器
+	- iwnpi wlan0 get_reg (mac,phy,rf...) 0xxxxxxx num
+	- iwnpi wlan0 get_reg mac 0x70000514 3   
+
+#安卓系统抓log
+	- logcat > /data/log.txt &
+
+#抓取kernel log
+	- 静态： dmesg
+		> dmesg -c 清空缓冲区
+	- 动态： cat /proc/kmsg 
+	
+#Data Path log关键词
+	- sprdwl|ieee|wlan|p2p|drop #all logs
+	- err rx|rx unkonow type #rx 方向的log
+	- get_msg_buf|tx_work_queue #all tx delayed message
+	- WLAN Driver #probe
+	- sprdwl_remove # remove
+	- Exception|Call trace|panic # see if other exception occur
+	- WIFI_CMD #see all command
+	- dump  #see if memory dump occur
+	- mdbg  #see mdbg operation for sdio/sipc
+	- android关键字:
+		+ died|crash
+		+ Exception|Call trace|panic|fatal|corruption|crash|died
+
+#查看开机原因
+	- kernel关键字:
+		+ starting
+		+ init
+		+ androidboot|sprd_set_reboot_mode
+		+ Exception|Call trace|panic|fatal|err|error|corruption|crash
+	- reference：http://blog.csdn.net/chi_wy/article/details/42472279
+	
+	
+#抓包分析
+	- ERP Infomation->ERP Flags中的Barker Preamble Mode为1，表示AP(wap_supplicant)组的包，为0，表示CP组的包。
+	- 分析重传是否多？
+	- 是否有聚合包？
+
+#吞吐不达标常见check-list
+	1. 环境
+		- 空口环境？屏蔽室环境？屏蔽箱环境？是否干净？
+	2. 测试用例
+		- 用例测试内容理解？
+		- 标准是什么？
+		- 各个设备如何进行连接？手机的角色是什么？
+	3. 之前是否有测试过？有没有测试通过的版本？
+	4. 手机是否有过性能测试？有没有更换手机测试？
+	5. 与手机角度，距离等是否有关系？
+	6. 软件版本问题
+		- 为debug or user版本？
+		- SLAB宏的影响
+	7. 当前环境下，跑iperf能跑多少？-可以帮忙测试。
+	8. 对比机测试结果
+	9. 哪个信道测试？是否有更换过信道？
+#吞吐不达标常见实验check-list
+1.	由于kernel打开了一个debug的feature，我会出一个关掉该feature的bootimage，麻烦替换测试。如果这个实验测试通过的话，后面的实验应该不用做了。
+2.	更换手机实验，排除单个手机性能问题。因为我们有遇到bug更换手机就好了的。
+3.	移动手机的距离，角度。sharkl2已知存在角度和距离影响吞吐的问题。这一个可以和第2个实验一起做。
+	a)	手机离电脑10cm，50cm。
+	b)	手机头对着电脑，与电脑平行。
+4.	帮忙实验一下，在同等的环境下，iperf TCP Tx/Rx能跑多少。
+5.	更换信道测试。排除WLAN与modem之间的信道干扰。需要改代码，来修改信道。
+6.	whale的手机能否测试通过
+7.  对比机的抓包，测试结果
+8.  调整手机时间为当前实际时间，记录实验步骤，记录处问题时间。出问题之后，不要做其他过多操作，第一时间抓取log。抓取log后，可以再进行其他尝试。
+	
+########################################################################################################################################
+##  low power 相关
+########################################################################################################################################
+#sleep 睡眠功耗问题，搜索kernel关键字：
+kernel log:
+	- wake up by #查看被谁wakeup的
+	- active wakeup #查看当前有哪些wake lock没有释放
+	- wakeup #单独看wakeup能看到更多信息
+android log:
+	- wakelock #查看有哪些获取和释放wakelock的人
+	- PowerManagerService # 查看pwoer相关 log
+	- acquireWakeLock|releaseWakeLock #查看谁拿的/释放wake
+#下载功耗，通过systrace抓取性能分析数据，
+	- sdio 线程：
+		- rx_core_thread
+		- rx_trans_thread
+		- tx_trans_thread
+		- tx_core_thread
+		- sprdwl_tx_work_queue #无法在systrace中显示
+	- sipc 线程：
+		- swcnblk_thread
+		- smsgc_thread
+		- sprdwl_tx_work_queue #无法在systrace中显示
+#systrace介绍参考：https://zhuanlan.zhihu.com/p/27331842，http://blog.csdn.net/fanfanxiaozu/article/details/44495265
+#systrace报告解读参考：http://blog.csdn.net/wanglu198506/article/details/50524876
+1. systrace的抓取
+	- 限制trace数据
+		Systrace工具可以生成应用和系统的潜在的巨大数据，为了限制工具收集的数据量，使数据与分析相关，使用下面的选项：
+		* 限制trace抓取的时间使用-t，--time选项，默认的trace时长是5s
+		* 限制trace抓取数据的size使用-b，--buf-size选项
+		* 指定哪些类型的进程被跟踪。可以被跟踪的进程在不同的Android版本上面略有不同：
+			- Android4.2和低于4.2的：使用--set-tags选项和--disk，--cpu-freq，--cpu-idle，--cpu-load选项
+			- Android4.3和高于4.3的：使用--list-categories选项来查看类型列表
+	- 在4.3和大于4.3的版本抓取trace信息
+		* 确保设备通过usb调试选项打开，并成功连接到电脑
+		* 指定要抓取的选项来执行trace，例如
+           $ cd android-sdk/platform-tools/systrace
+           $ python systrace.py --time=10 -o mynewtrace.html sched gfx view wm
+		* 在设备上，执行任何你想要被包含进trace信息的操作
+	- 在4.2和低于4.2的版本抓取trace信息
+		a. 在4.2和低于4.2的设备上面使用trace，为了提高效率，你必须在抓取之前配置想要跟踪的进程类型，工具可以收集下面进程类型的信息：
+			* 通常的系统进程，比如graphics，audio和input进程（使用trace category tags选择）
+			* 低级别的系统信息，比如CPU，kernel和磁盘活动(使用options选择)
+		
+		b. 使用下面的命令设置Systrace的tags：
+			1.使用--set-tags选项：
+                $ cd android-sdk/platform-tools/systrace
+                $ python systrace.py --set-tags=gfx,view,wm
+            2.重启adb使这些进程跟踪生效
+                $ adb shell stop
+                $ adb shell start
+		c. 当你配置完trace的category tags，就可以开始收集信息来进行分析。
+			使用现在的trace tag设置来运行trace：
+            1.确保设备adb连接成功
+            2.执行trace并设定低级别的trace选项，限定选项等
+                $ python systrace.py --cpu-freq --cpu-load --time=10 -o mytracefile.html
+            3.在设备上，执行任何你想要被包含进trace信息的操作
+			
+########################################################################################################################################
+##  control path 相关
+########################################################################################################################################			
+#修改softAp 默认信道
+	- 修改/data/misc/wifi/hostapd.conf文件是动态生成的。无法修改。
+	- system/netd/server/SoftapController.cpp只能改代码实现
+
+#修改softap默认
+
+
+########################################################################################################################################
+##  iwnpi 相关
+########################################################################################################################################
+1. 利用iwnpi测试WiFi tx性能，功耗
+	- insmod /lib/modules/sprdwl_ng.ko
+	- iwnpi wlan0 start
+	- iwnpi wlan0 set channel_num <num>
+	- iwnpi wlan0 set_rate <num>
+	- iwnpi wlan0 tx_start
+	- iwnpi wlan0 tx_stop #stop tx packets
+2. commands for tx power
+	- iwnpi wlan0 set_tx_power <num> #max num = 15
+
+		
