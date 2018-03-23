@@ -31,6 +31,7 @@ repo sync -c --no-tags -j8;repo start --all master
 	sprdroid6.0_trunk
 	sprdroid7.0_trunk_k44
 	sprdroid7.0_trunk_k44_17b
+	sprdroid7.0_trunk_k44_17e
 	sprdroid7.0_trunk_k44_pike2_dev
 	sprdroid8.0_pdk_sharkle_bringup_dev
 	sprdroido_pdk
@@ -40,6 +41,11 @@ repo sync -c --no-tags -j8;repo start --all master
 	sprdroid6.0_kaios_17d
 	sprdroid8.1_pdk
 	sprdroid8.1_trunk
+	sprdroid8.1_trunk_18a
+	sprdroid6.0_trunk_16d
+	sprdroid4.4_sfphone_17f
+	sprdroid6.0_trunk_k318_dev
+	sprdroid6.0mr1_prime_k318_dev
 	sprdroid6.0_trunk_16d
 
 
@@ -53,10 +59,32 @@ git clone ssh://damon.li@review.source.spreadtrum.com:29418/vendor/sprd/modules/
 	2. git add file1.c file2.c
 	3. git commit -s  #之后全部选择1->1->1
 		#====================================
-		#	Bug #824844 wcn: sc2332: adjust sipc log patter
+		#	Bug #836319 wlan: driver: extend the spin_lock scope to avoid accessing deleted list node
 		#
-		#	[root cause  ] adjust sipc log patter
-		#	[changes     ] sipc.c
+		#	[root cause  ] access a deleted list while looping
+		#	[changes     ] qos.c
+		#	[side effects] No
+		#	[self test   ]:YES
+		#	[download normally]:Yes
+		#	[power on/off normally]:Yes
+		#	[do common repository/branch inspection]:Yes
+		#	[is there dependence]:No
+		#	[confirm dependent commit]:No
+		#	[board]:sp9850kh_1h10_smtcmcc
+		#	[test case]:NA
+		#	[reviewers   ] keguang.zhang
+		#	[change_type ] bringup --> sprd_chip_support
+		#	[tag_product ] common
+		
+		#   This patch is to extend the spin_lock scope to avoid accessing deleted list node.
+		
+		
+		#	Signed-off-by: Damon Li <damon.li@spreadtrum.com>		
+		#####################################################################################
+		#	Bug #846617 wlan: sc2332: remove intf_ops.h to improve WLAN organization
+		#
+		#	[root cause  ] remove intf_ops.h to improve WLAN organization
+		#	[changes     ] main.c sdio.c intf_ops.h
 		#	[side effects] No
 		#	[self test   ]:YES
 		#	[download normally]:Yes
@@ -70,29 +98,7 @@ git clone ssh://damon.li@review.source.spreadtrum.com:29418/vendor/sprd/modules/
 		#	[change_type ] bringup --> sprd_chip_support
 		#	[tag_product ] common
 		
-		#   This patch is to adjust sipc log patter.
-		
-		
-		#	Signed-off-by: Damon Li <damon.li@spreadtrum.com>		
-		#####################################################################################
-		#	Bug #807514 arm: dts: change rx blk number to 256
-		#
-		#	[root cause  ] change rx blk number to 256
-		#	[changes     ] sc7731e-wcn.dtsi
-		#	[side effects] No
-		#	[self test   ]:YES
-		#	[download normally]:Yes
-		#	[power on/off normally]:Yes
-		#	[do common repository/branch inspection]:Yes
-		#	[is there dependence]:No
-		#	[confirm dependent commit]:No
-		#	[board]:sp7731e_1h10
-		#	[test case]:NA
-		#	[reviewers   ] keguang.zhang
-		#	[change_type ] bringup --> sprd_chip_support
-		#	[tag_product ] common
-		
-		#   This patch is to change rx blk number to 256.
+		#   This patch is to remove intf_ops.h to improve WLAN organization
 		
 		
 		#	Signed-off-by: Damon Li <damon.li@spreadtrum.com>
@@ -111,6 +117,7 @@ git clone ssh://damon.li@review.source.spreadtrum.com:29418/vendor/sprd/modules/
 
 
 #====================================================================================
+#http://blog.csdn.net/ritterliu/article/details/7775733 替换自己的manifest，回退到某一个节点。
 2 repo常用指令详解
 2.1 repo init (下载repo并克隆manifest)
 Usage：

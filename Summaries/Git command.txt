@@ -37,6 +37,8 @@ git status #查看修改的文件。
 git diff #查看修改的内容。
 git show commit-id #查看commit修改的内容
 git log -p #查看修改内容
+git log --since="Mon Nov 27 10:46:04 2017 +0800" --before="Wed Nov 29 13:26:12 2017 +0800"
+gerrit搜索：branch:sprdroid8.1_trunk project:device/sprd/sharkle status:merged
 
 
 
@@ -121,3 +123,7 @@ push
 	- git push ssh://user.name@10.0.0.160:29418/<path>.git HEAD:refs/for/<branch>
 
 
+	
+	
+#其他功能
+1. 删除中途某一次提交：https://www.36nu.com/post/275

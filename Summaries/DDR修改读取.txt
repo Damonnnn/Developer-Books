@@ -1,0 +1,25 @@
+需要两个修改
+
+1 首先dts要支持一个与wcm相关的属性，可以参考
+http://review.source.spreadtrum.com/gerrit/#/c/424770/
+
+增加一个wcn相关的name，比如就叫“wcn”，并添加这个name对应的频率值
+
+2 访问这个两个节点
+Echo wcn > /sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs
+echo camhigh >/sys/class/devfreq/scene-frequency/sprd_governor/scenario_dfs
+代表wcn投票+1
+Echo wcn > /sys/class/devfreq/scene-frequency/sprd_governor/exit_scene
+echo camhigh > /sys/class/devfreq/scene-frequency/sprd_governor/exit_scene
+代表wcn投票-1
+
+注意如果在kernel中访问节点需要使用
+Filp_open vfs_write来操作
+
+3 之前也提供过直接调用函数的实现方法可以参考
+http://review.source.spreadtrum.com/gerrit/#/c/371751/
+
+
+
+查看当前ddr频率：
+	cat sys/class/devfreq/scene-frequency/sprd_governor/ddrinfo_cur_freq

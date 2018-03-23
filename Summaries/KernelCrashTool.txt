@@ -9,7 +9,8 @@
 	- ./crash_arm64 -m phys_offset=0x80000000 vmlinux sysdump --cpus 4
 	- ./crash_arm -m phys_offset=0x80000000 vmlinux sysdump --cpus 4
 	- ./crash_x86_64 -m phys_base=0x34200000 vmlinux sysdump --cpus 8
-
+	- --minimal #通常用于dump损坏
+	- -d <num> #更多debug信息
 #help
 	- help                   #显示支持哪些命令
 	- help xxx               #显示命令xxx的man page
@@ -72,8 +73,9 @@
 	+ CS：code segment
 	+ 最右边的数字为偶数，表示执行在kernel mode，为奇数，执行在user mode。
 - ps命令显示所有task，其中active的task标记为">";[]括起来的是kernel threads。
-- 6b6b6b6b：这个地址是kernel中被free的memory的填充地址。
+- 6b6b6b63：这个地址是kernel中被free的memory的填充地址。
 - cccccccc ：这个值在stack上面出现，这个值后面的就是call stack
+- bbbbbbbb : 这个值通常为use-after-free的地址
 - kmem -S 0xe8e2d64c: 可以查看slab结构体栈调用信息
 
 

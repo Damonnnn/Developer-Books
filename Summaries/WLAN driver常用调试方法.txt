@@ -13,7 +13,25 @@
 	- iwnpi wlan0 lna_status
 
 #查看sblock是否分配成功：
-	- cat /sys/kernel/debug/sipc/sblock
+	- cat /sys/kernel/debug/sipc/swcnblk
+	#示例：参照点为ap侧
+	#swcnblk dst 3, channel:   8, state: 1, smem_virt: 0xf1107000, smem_cached_virt:
+	#0xf1156000 smem_blk_virt: 0xf1156000 smem_addr: 0x881c0000, mapped_smem_addr: 0x
+	#1c0000, smem_size: 0x4ec60, txblksz: 1664, rxblksz: 1664
+	#swcnblk ring: txblk_virt :0xf1156060, rxblk_virt :0xf1170060
+	#
+	#swcnblk ring header: rxblk_addr :0x1da060, rxblk_rdptr :0x844ea, rxblk_wrptr :0x
+	#844ea, rxblk_size :1664, rxblk_count :0, rxblk_blks: 0x20e260    #ap可以读的blk数量（有多少cp发过来的待处理的数据包）
+	#
+	#swcnblk ring header: txblk_addr :0x1c0060, txblk_rdptr :0x76, txblk_wrptr :0x76,
+	#txblk_size :1664, txblk_count :0, txblk_blks: 0x20e060          #cp可以读取的blk数量（ap发给cp的，cp未处理的数据包个数，）
+	#
+	#swcnblk pool header: rxblk_addr :0x1da060, rxblk_rdptr :0x84547, rxblk_wrptr :0x
+	#84569, rxblk_size :1664, rxpool_count :34, rxblk_blks: 0x20e860  #cp侧可以获取的空的blk数（cp的tx方向）
+	#
+	#swcnblk pool header: txblk_addr :0x1c0060, txblk_rdptr :0x136, txblk_wrptr :0x17
+	#6, txblk_size :1664, txpool_count :64, txblk_blks: 0x20e660      #ap侧可以获取的空的blk数（ap的tx方向）
+		
 #查看 credit信息
 	- cat /sys/kernel/debug/ieee80211/phy0/sprdwl_wifi/sdioinfo
 #wcnd
@@ -27,6 +45,8 @@
 	- UDP:
 		client: iperf -c xx.xx.xx.xx -b20M -i1 -t20  #最大62M. -t20 means 20s
 		server: iperf -s -u -i1
+	- 小包：
+		udprx： iperf -c xx.xx.xx.xx -b20M -i1 -t20 -l90 #手机端为server，这条命令为电脑端的。
 
 #利用iwnpi读取CP寄存器
 	- iwnpi wlan0 get_reg (mac,phy,rf...) 0xxxxxxx num
@@ -67,6 +87,13 @@
 	- ERP Infomation->ERP Flags中的Barker Preamble Mode为1，表示AP(wap_supplicant)组的包，为0，表示CP组的包。
 	- 分析重传是否多？
 	- 是否有聚合包？
+	
+#节点回退
+	- 找jenkins的节点信息：manifest、changelogday、changlogweek、changelogmonth。统计提交信息。
+	- 搜索gerrit的merge日期，大致选出提交信息。
+	- 优先对比boot，如果boot导致问题，优先回退kernel节点进行排查。
+	- 如果不是boot导致，优先对比dfs image。
+	- 对比的时候，pac包可以轮换做base。
 
 #吞吐不达标常见check-list
 	1. 环境
@@ -80,7 +107,7 @@
 	5. 与手机角度，距离等是否有关系？
 	6. 软件版本问题
 		- 为debug or user版本？
-		- SLAB宏的影响
+		- SLAB(General setup -> Enable SLUB debugging support关闭)宏的影响,Ftrace(kernel hacking ->Traces 关闭)影响？
 	7. 当前环境下，跑iperf能跑多少？-可以帮忙测试。
 	8. 对比机测试结果
 	9. 哪个信道测试？是否有更换过信道？
@@ -104,6 +131,10 @@ kernel log:
 	- wake up by #查看被谁wakeup的
 	- active wakeup #查看当前有哪些wake lock没有释放
 	- wakeup #单独看wakeup能看到更多信息
+	- sleep #查看sleep的时间点
+	- sleep|wake up by|wakeup#常用组合
+	- PM: suspend entry#附近进入真正的sleep，此时log被抑制，后续的log会在醒来后吐出来。
+	- suspend entry|wake up by|suspend exit #更常用组合，可以查看睡眠时间。
 android log:
 	- wakelock #查看有哪些获取和释放wakelock的人
 	- PowerManagerService # 查看pwoer相关 log
@@ -153,6 +184,44 @@ android log:
             2.执行trace并设定低级别的trace选项，限定选项等
                 $ python systrace.py --cpu-freq --cpu-load --time=10 -o mytracefile.html
             3.在设备上，执行任何你想要被包含进trace信息的操作
+
+#sleep log 示例
+#kernel/drivers/soc/sprd/pm-sharkle.c
+	- PM: suspend entry#附近进入真正的sleep，此时log被抑制，后续的log会在醒来后吐出来。
+[01-09 16:41:19.251] <6>[  225.849964] c0 AP INTC0: MSKSTS 0x00000000, RAW 0x00000000, EN 0x10002800
+[01-09 16:41:19.251] <6>[  225.849964] c0 AP INTC1: MSKSTS 0x00000000, RAW 0x00000000, EN 0x00800078
+[01-09 16:41:19.251] <6>[  225.849964] c0 AP INTC2: MSKSTS 0x00000000, RAW 0x0d000000, EN 0x00000030
+[01-09 16:41:19.251] <6>[  225.849964] c0 AP INTC3: MSKSTS 0x00000000, RAW 0x00000000, EN 0x00000000
+[01-09 16:41:19.251] <6>[  225.849964] c0 AON INTC: MSKSTS 0x00000000, RAW 0x00000000, EN 0x04068214 # sleep前最后的log
+[01-09 16:41:19.251] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_ap_apb, current_rate = 128000000 #醒来第一行log。（这种log睡前也会打印）
+[01-09 16:41:19.251] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_nandc_ecc, current_rate = 26000000
+[01-09 16:41:19.251] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_uart1, current_rate = 26000000
+[01-09 16:41:19.251] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_i2c0, current_rate = 26000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_i2c1, current_rate = 26000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_i2c2, current_rate = 26000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_i2c3, current_rate = 26000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_i2c4, current_rate = 26000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_spi0, current_rate = 26000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_spi2, current_rate = 26000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_hs_spi, current_rate = 192000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_ce, current_rate = 256000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_nandc_2x, current_rate = 26000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_sdio0_2x, current_rate = 390000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_sdio1_2x, current_rate = 26000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_emmc_2x, current_rate = 390000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_otg_ref, current_rate = 12000000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_gsp, current_rate = 153600000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_dispc0, current_rate = 153600000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_iis0, current_rate = 153600000
+[01-09 16:41:19.252] <6>[  225.849964] c0 sprd_deep_store_ap_clk, clk_vsp, current_rate = 76800000 
+[01-09 16:41:19.252] <6>[  225.849964] c0 AP INTC0: MSKSTS 0x00000000, RAW 0x00000000, EN 0x10002800
+[01-09 16:41:19.252] <6>[  225.849964] c0 AP INTC1: MSKSTS 0x00000000, RAW 0x00000000, EN 0x00800078
+[01-09 16:41:19.252] <6>[  225.849964] c0 AP INTC2: MSKSTS 0x00000020, RAW 0x0d000020, EN 0x00000030
+[01-09 16:41:19.253] <6>[  225.849964] c0 AP INTC3: MSKSTS 0x00000000, RAW 0x00000000, EN 0x00000000
+[01-09 16:41:19.253] <6>[  225.849964] c0 AON INTC: MSKSTS 0x00000000, RAW 0x00000000, EN 0x04068214
+[01-09 16:41:19.253] <6>[  225.849964] c0 Deep Sleep 7 Times
+[01-09 16:41:19.253] <6>[  225.849964] c0 wake up by mbox_tar_ap
+[01-09 16:41:19.253] <6>[  225.849989] c0 mbox: wake up by id = 5
 			
 ########################################################################################################################################
 ##  control path 相关
