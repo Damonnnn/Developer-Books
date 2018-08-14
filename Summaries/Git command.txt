@@ -39,7 +39,11 @@ git show commit-id #查看commit修改的内容
 git log -p #查看修改内容
 git log --since="Mon Nov 27 10:46:04 2017 +0800" --before="Wed Nov 29 13:26:12 2017 +0800"
 gerrit搜索：branch:sprdroid8.1_trunk project:device/sprd/sharkle status:merged
-
+git stash 暂存本地改动
+git stash show <tab> #查看stash的东西
+git stash show -p stash@{0} #查看stash的内容
+git stash apply stash@{0} #将stash的内容还原
+git rebase -i HEAD~2 #交换最近2笔提交的顺序
 
 
 
@@ -74,10 +78,10 @@ git commit -s
 
 	#Signed-off-by: damon.li <damon.li@spreadtrum.com>
     ###########################################################
-	#  Bug #810449 wcn: sc2332: add new folder for new folder structure
+	#  Bug #856858 wcn: sc2332: fix use-after-free bug in wlan driver
 
-	#  [root cause  ] add new folder for new folder structure
-	#  [changes     ] sipc.c
+	#  [root cause  ] fix use-after-free bug in wlan driver
+	#  [changes     ] main.c
 	#  [side effects] No
 	#  [self test   ]:open wifi & connect
 	#  [download normally]:Yes
@@ -87,11 +91,11 @@ git commit -s
 	#  [confirm dependent commit]:No
 	#  [board]:sp9832e-1h10-native
 	#  [test case]:NA
-	#  [reviewers   ] jingxiang.li
+	#  [reviewers   ] keguang.zhang
 	#  [change_type ] bringup --> sprd_chip_support
 	#  [tag_product ] common
 	
-	#  This patch is to add new folder for new folder structure.
+	#  This patch is to fix use-after-free bug in wlan driver.
      
 	 
 	#  Signed-off-by: Damon Li <damon.li@spreadtrum.com>
@@ -116,7 +120,7 @@ git clone:
 	- 使用git clone命令时，<branch>为具体分支名，如sprdlinux3.10_lsk15，sprd-7.0 等。
 	- <path>为该分支的仓库位置，6.0分支的<path>为/kernel/common，7.0/8.0对应的path为/vendor/sprd/modules/wcn
 	- git clone ssh://user.name@review.source.spreadtrum.com:29418/<path> -b <branch>
-	- git clone ssh://damon.li@review.source.spreadtrum.com:29418/kernel/common -b sprdlinux3.18
+	- git clone ssh://damon.li@review.source.spreadtrum.com:29418/kernel/common -b sprdlinux4.4/sprdlinux3.18
 
 push 
 	- push之前需执行以下命令：gitdir=$(git rev-parse --git-dir); scp -p -P 29418 user.name@review.source.spreadtrum.com:hooks/commit-msg ${gitdir}/hooks/

@@ -107,7 +107,7 @@
 	5. 与手机角度，距离等是否有关系？
 	6. 软件版本问题
 		- 为debug or user版本？
-		- SLAB(General setup -> Enable SLUB debugging support关闭)宏的影响,Ftrace(kernel hacking ->Traces 关闭)影响？
+		- SLAB影响打包(General setup -> Enable SLUB debugging support关闭)宏的影响,Ftrace影响小包(kernel hacking ->Traces 关闭)影响？
 	7. 当前环境下，跑iperf能跑多少？-可以帮忙测试。
 	8. 对比机测试结果
 	9. 哪个信道测试？是否有更换过信道？
@@ -122,6 +122,7 @@
 6.	whale的手机能否测试通过
 7.  对比机的抓包，测试结果
 8.  调整手机时间为当前实际时间，记录实验步骤，记录处问题时间。出问题之后，不要做其他过多操作，第一时间抓取log。抓取log后，可以再进行其他尝试。
+9. 用的什么测试工具：iperf？magic iperf（magic iperf UDP tx有问题）？Ixchariot什么版本？
 	
 ########################################################################################################################################
 ##  low power 相关

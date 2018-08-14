@@ -23,9 +23,13 @@ repo init -b sprdroid6.0_trunk                                    这三句话实现切
 repo sync (not needed if your local copy is up to date)
 repo start sprdroid6.0_trunk --all 
 
+#同步代码到指定的manifest
+repo init -m xxx.manifest #manifest 要先放到.repo/manifests/
+repo sync
+
 #举例
 repo init -u gitadmin@gitmirror.spreadtrum.com:android/platform/manifest.git -b sprdroid7.0_trunk_k44
-repo init -u gitadmin@gitmirror.spreadtrum.com:android/platform/manifest -b sprdroid8.1_trunk
+repo init -u gitadmin@gitmirror.spreadtrum.com:android/platform/manifest -b sprdroid6.0_intrinsyc_trunk
 repo sync -c --no-tags -j8;repo start --all master
 #常用的repo仓库
 	sprdroid6.0_trunk
@@ -47,6 +51,9 @@ repo sync -c --no-tags -j8;repo start --all master
 	sprdroid6.0_trunk_k318_dev
 	sprdroid6.0mr1_prime_k318_dev
 	sprdroid6.0_trunk_16d
+	sprdroid8.1_trunk_18a_zte_cus
+	sprdroid8.1_trunk_18a_rls2
+	sprdroid6.0_intrinsyc_trunk
 
 
 #获取某一个具体分支：sprdroid_own_copyright_n
@@ -81,10 +88,10 @@ git clone ssh://damon.li@review.source.spreadtrum.com:29418/vendor/sprd/modules/
 		
 		#	Signed-off-by: Damon Li <damon.li@spreadtrum.com>		
 		#####################################################################################
-		#	Bug #846617 wlan: sc2332: remove intf_ops.h to improve WLAN organization
+		#	Bug #850207 wlan: sc2332: remove useless hw_type variable
 		#
-		#	[root cause  ] remove intf_ops.h to improve WLAN organization
-		#	[changes     ] main.c sdio.c intf_ops.h
+		#	[root cause  ] remove useless hw_type variable
+		#	[changes     ] sdio.c sipc.c
 		#	[side effects] No
 		#	[self test   ]:YES
 		#	[download normally]:Yes
@@ -98,16 +105,35 @@ git clone ssh://damon.li@review.source.spreadtrum.com:29418/vendor/sprd/modules/
 		#	[change_type ] bringup --> sprd_chip_support
 		#	[tag_product ] common
 		
-		#   This patch is to remove intf_ops.h to improve WLAN organization
+		#   This patch is to remove useless hw_type variable
 		
 		
 		#	Signed-off-by: Damon Li <damon.li@spreadtrum.com>
-	
+		
+		###################################################################################
+		#	Bug #916638  nuttx/config/sc2355: close network for production line version
+
+		#	close network for production line version
+
+		#	[root cause ] close network for production line version
+		#	[changes ] code
+		#	[side effects] none
+		#	[self test ] <board, Test cases summary>:
+		#	[change_type ] code
+		#	[tag_product ] marlin3
+
+		#
+		#	Signed-off-by: Damon Li <damon.li@unisoc.com>
+
 		#====================================
+		#
 	4. git format-patch -1
 	5. kernel/scripts/checkpatch.pl --strict file.patch
 	6. repo upload vendor/sprd/modules/wcn/ --destination sprd-8.0    # or use: git push origin local_branch:refs/for/remote_branch
 	7. repo upload kernel/ --destination sprdlinux4.4 #only for sprdroido_pdk kernel commit
+	8. git push ssh://damon.li@review.source.spreadtrum.com:29418/sprd_IoT/nuttx/sc2355 HEAD:refs/for/sprd_marlin3_module # for WCN IoT
+	9. git push ssh://damon.li@review.source.spreadtrum.com:29418/sprd_IoT/nuttx/apps HEAD:refs/for/sprd_marlin3_module # for WCN IoT
+	10. git push ssh://damon.li@review.source.spreadtrum.com:29418/sprd_IoT/nuttx/nuttx HEAD:refs/for/sprd_marlin3_module # for WCN IoT
 	#=============================================================================================
 
 
